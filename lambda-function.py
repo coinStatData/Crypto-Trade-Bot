@@ -34,6 +34,6 @@ def getBalance():
         break;
     print('Balance is -> ', balance)
     balance = json.loads(balance)
-    balance = round(float(balance['balance']), 7) - .000001
+    balance = round(float(balance['balance']) - .000001, 7)
     return balance
 
