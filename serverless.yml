@@ -1,0 +1,36 @@
+name: coinbase-sell
+org: coinStatData 
+description: tbd
+repo: https://github.com/coinStatData/coinbase-sell
+license: MIT
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+
+layers:
+  cbpro:
+    package:
+      artifact: layers/cbpro/cbpro-layer.zip
+    allowedAccounts:
+    - '*'
+    compatibleArchitectures:
+    - x86_64
+    compatibleRuntimes:
+    - python3.9
+    retain: false
+    description: coinbase pro lib (cbpro)
+
+functions:
+  hello:
+    handler: lambda_function.lambda_handler
+    events:
+      - httpApi:
+          path: /
+          method: post
+      - schedule: cron(15 6 * * ? *)
+      - schedule: cron(14 6 * * ? *)
+    layers:
+      - !Ref CbproLambdaLayer
