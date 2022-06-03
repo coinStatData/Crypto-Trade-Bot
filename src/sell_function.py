@@ -1,10 +1,11 @@
 import os
 import json
-import math
-from typing import Final, Union, List
+from typing import Final
 
-import cbpro
+from cbpro import AuthenticatedClient
 from aws_lambda_powertools.logging import Logger
+
+from src.commons import get_balance, InsufficientFundsException
 
 logging = Logger()
 
@@ -13,7 +14,7 @@ API_KEY: Final[str] = os.environ['API_KEY']
 API_PASS: Final[str] = os.environ['API_PASS']
 URL: Final[str] = os.environ['URL']
 
-client = cbpro.AuthenticatedClient(
+client = AuthenticatedClient(
     key=API_KEY,
     b64secret=API_SECRET,
     passphrase=API_PASS,
@@ -27,8 +28,15 @@ def lambda_handler(event, context):
         'context': context,
     })
 
-    balance = get_balance()
-    order_details = None
+    account_id, balance = get_balance(
+        client=client,
+        target_currency='BTC'
+    )
+
+    logging.info({
+        'account_id': account_id,
+        'balance': balance,
+    })
 
     if balance > 0.000001:
         order_details = client.place_market_order(
@@ -36,35 +44,12 @@ def lambda_handler(event, context):
             side='sell',
             size=balance
         )
-        print(f'{order_details=}')
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'order_details': order_details,
-        })
-    }
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'order_details': order_details.__dict__,
+            }, default=str)
+        }
 
-
-def get_balance(target_currency: str = 'BTC') -> float:
-    accounts: List[dict] = client.get_accounts()
-
-    acc_id: Union[str, None] = None
-    balance: float = math.nan
-    for acc in accounts:
-        currency = acc.get('currency')
-        if currency == target_currency:
-            acc_id = acc.get('id')
-
-    if acc_id is None:
-        return math.nan
-
-    acc_history: List[dict] = client.get_account_history(acc_id)
-    for hist in acc_history:
-        balance = hist.get('balance', math.nan)
-        balance = round(
-            number=float(balance) - .000001,
-            ndigits=7,
-        )
-        break
-    return balance
+    raise InsufficientFundsException(f'{account_id=}; {balance=}')
