@@ -1,4 +1,6 @@
 import json
+import sys
+sys.path.append('..')
 
 from aws_lambda_powertools.logging import Logger
 from cbpro import AuthenticatedClient
