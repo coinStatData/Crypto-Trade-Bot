@@ -1,5 +1,6 @@
+import os
 import math
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Final
 from cbpro import AuthenticatedClient
 
 
@@ -29,3 +30,17 @@ def get_balance(client: AuthenticatedClient, target_currency: str = 'BTC') -> Tu
         )
         break
     return acc_id, balance
+
+
+def init_cbpro_client() -> AuthenticatedClient:
+    api_key: Final[str] = os.environ['API_KEY']
+    api_secret: Final[str] = os.environ['API_SECRET']
+    api_passphrase: Final[str] = os.environ['API_PASS']
+    url: Final[str] = os.environ['URL']
+
+    return AuthenticatedClient(
+        key=api_key,
+        b64secret=api_secret,
+        passphrase=api_passphrase,
+        api_url=url
+    )
