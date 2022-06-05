@@ -1,0 +1,10 @@
+# folders
+.idea/
+.vscode/
+venv/
+node_modules/
+.serverless/
+
+# files
+.env
+package-lock.json

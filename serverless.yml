@@ -1,0 +1,68 @@
+service: CoinStatData
+frameworkVersion: '3'
+configValidationMode: error
+useDotenv: true
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!package.json'
+    - '!package-lock.json'
+    - '!.env'
+    - '!venv/**'
+    - '!.serverless/**'
+    - '!.idea/**'
+    - '!.git/**'
+    - '!.vscode/**'
+    - '!.gitignore'
+    - '!.npmignore'
+    - '!serverless.yml'
+    - '!layers/**'
+    - '!requirements.txt'
+
+provider:
+  name: aws
+  runtime: python3.9
+  environment:
+    API_SECRET: ${env:API_SECRET}
+    API_KEY: ${env:API_KEY}
+    API_PASS: ${env:API_PASS}
+    URL: ${env:URL}
+
+  httpApi:
+    cors: true
+
+layers:
+  cbpro:
+    package:
+      artifact: layers/cbpro/cbpro-layer.zip
+    allowedAccounts:
+    - '*'
+    compatibleArchitectures:
+    - x86_64
+    compatibleRuntimes:
+    - python3.9
+    retain: false
+    description: coinbase pro lib (cbpro)
+
+functions:
+  sell:
+    handler: src/sell_function.lambda_handler
+    events:
+      - httpApi:
+          path: /sell
+          method: GET
+      - schedule: cron(15 6 * * ? *)
+      - schedule: cron(14 6 * * ? *)
+    layers:
+      - !Ref CbproLambdaLayer
+  buy:
+    handler: src/buy_function.lambda_handler
+    events:
+      - httpApi:
+          path: /buy
+          method: GET
+      - schedule: cron(15 6 * * ? *)
+      - schedule: cron(14 6 * * ? *)
+    layers:
+      - !Ref CbproLambdaLayer
